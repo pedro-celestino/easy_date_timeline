@@ -9,6 +9,8 @@ final class EasyTimeLineProps {
     this.backgroundColor,
     this.margin,
     this.decoration,
+    this.autoCenter = false,
+    this.animateOnDayChanged = false,
   });
 
   /// The padding applied to the date timeline widget from left and right.
@@ -28,4 +30,13 @@ final class EasyTimeLineProps {
 
   /// The decoration of the timeline widget.
   final BoxDecoration? decoration;
+
+  /// Automatically centers the day in the timeline.
+  /// If set to `true`, the timeline will automatically scroll to center the day.
+  /// If set to `false`, the timeline will not scroll when the day changes.
+  final bool autoCenter;
+
+  /// If set to `true`, the timeline will animate when the day changes.
+  /// If set to `false`, the timeline will not animate when the day changes.
+  final bool animateOnDayChanged;
 }

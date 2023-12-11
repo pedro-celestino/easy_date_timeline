@@ -23,8 +23,6 @@ class InfiniteTimeLineWidget extends StatefulWidget {
     required this.activeDayColor,
     required this.lastDate,
     this.controller,
-    this.autoCenter = false,
-    this.animateOnDayChanged = false,
   })  : assert(timeLineProps.hPadding > -1,
             "Can't set timeline hPadding less than zero."),
         assert(timeLineProps.separatorPadding > -1,
@@ -52,15 +50,6 @@ class InfiniteTimeLineWidget extends StatefulWidget {
 
   /// The background color of the selected day.
   final Color activeDayColor;
-
-  /// Automatically centers the day in the timeline.
-  /// If set to `true`, the timeline will automatically scroll to center the day.
-  /// If set to `false`, the timeline will not scroll when the day changes.
-  final bool autoCenter;
-
-  /// If set to `true`, the timeline will animate when the day changes.
-  /// If set to `false`, the timeline will not animate when the day changes.
-  final bool animateOnDayChanged;
 
   /// Represents a list of inactive dates for the timeline widget.
   /// Note that all the dates defined in the inactiveDates list will be deactivated.
@@ -133,7 +122,7 @@ class _InfiniteTimeLineWidgetState extends State<InfiniteTimeLineWidget> {
     _daysCount = widget.lastDate.difference(widget.firstDate).inDays;
     final initialDateOffset = _calculateDateOffset();
     _controller = ScrollController(initialScrollOffset: initialDateOffset);
-    if (widget.autoCenter) {
+    if (widget.timeLineProps.autoCenter) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         _jumpToCenter(initialDateOffset);
       });
@@ -320,8 +309,8 @@ class _InfiniteTimeLineWidgetState extends State<InfiniteTimeLineWidget> {
     // A date is selected
     widget.onDateChange?.call(currentDate);
     // Mantain the selected day in the center of the timeline
-    if (widget.animateOnDayChanged) {
-      if (widget.autoCenter) {
+    if (widget.timeLineProps.animateOnDayChanged) {
+      if (widget.timeLineProps.autoCenter) {
         _animateToCenter(currentDate);
       } else {
         _animateToStart(currentDate);

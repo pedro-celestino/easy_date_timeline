@@ -94,7 +94,7 @@ class EasyInfiniteDateTimelineController {
   /// @param date The date for which to calculate the offset.
   /// @return The calculated offset.
   double _calculateOffset(DateTime date) {
-    final autoCenter = _infiniteTimeLineState!.widget.autoCenter;
+    final autoCenter = _infiniteTimeLineState!.widget.timeLineProps.autoCenter;
     final offset = _calculateDateOffset(date) -
         (autoCenter ? _infiniteTimeLineState!._dayOffsetCenterConstrains : 0.0);
     return offset;
