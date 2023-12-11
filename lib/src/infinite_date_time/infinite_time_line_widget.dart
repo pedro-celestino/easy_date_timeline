@@ -23,6 +23,8 @@ class InfiniteTimeLineWidget extends StatefulWidget {
     required this.activeDayColor,
     required this.lastDate,
     this.controller,
+    this.autoCenter = false,
+    this.animateOnDayChanged = false,
   })  : assert(timeLineProps.hPadding > -1,
             "Can't set timeline hPadding less than zero."),
         assert(timeLineProps.separatorPadding > -1,
@@ -50,6 +52,15 @@ class InfiniteTimeLineWidget extends StatefulWidget {
 
   /// The background color of the selected day.
   final Color activeDayColor;
+
+  /// Automatically centers the day in the timeline.
+  /// If set to `true`, the timeline will automatically scroll to center the day.
+  /// If set to `false`, the timeline will not scroll when the day changes.
+  final bool autoCenter;
+
+  /// If set to `true`, the timeline will animate when the day changes.
+  /// If set to `false`, the timeline will not animate when the day changes.
+  final bool animateOnDayChanged;
 
   /// Represents a list of inactive dates for the timeline widget.
   /// Note that all the dates defined in the inactiveDates list will be deactivated.
@@ -100,6 +111,9 @@ class _InfiniteTimeLineWidgetState extends State<InfiniteTimeLineWidget> {
 
   double _getItemExtend = 0.0;
 
+  double get _dayOffsetCenterConstrains =>
+      (MediaQuery.of(context).size.width - _dayOffsetConstrains) / 2.09;
+
   @override
   void didUpdateWidget(covariant InfiniteTimeLineWidget oldWidget) {
     super.didUpdateWidget(oldWidget);
@@ -117,8 +131,35 @@ class _InfiniteTimeLineWidgetState extends State<InfiniteTimeLineWidget> {
     _initItemExtend();
     _attachEasyController();
     _daysCount = widget.lastDate.difference(widget.firstDate).inDays;
-    _controller = ScrollController(
-      initialScrollOffset: _calculateDateOffset(),
+    final initialDateOffset = _calculateDateOffset();
+    _controller = ScrollController(initialScrollOffset: initialDateOffset);
+    if (widget.autoCenter) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _jumpToCenter(initialDateOffset);
+      });
+    }
+  }
+
+  void _jumpToCenter(double initialDateOffset) {
+    _controller.jumpTo(
+      initialDateOffset - _dayOffsetCenterConstrains,
+    );
+  }
+
+  void _animateToCenter(DateTime currentDate) {
+    _controller.animateTo(
+      _calculateDateOffsetWithCurrentDate(currentDate) -
+          _dayOffsetCenterConstrains,
+      duration: const Duration(milliseconds: 500),
+      curve: Curves.decelerate,
+    );
+  }
+
+  void _animateToStart(DateTime currentDate) {
+    _controller.animateTo(
+      _calculateDateOffsetWithCurrentDate(currentDate),
+      duration: const Duration(milliseconds: 500),
+      curve: Curves.decelerate,
     );
   }
 
@@ -149,6 +190,27 @@ class _InfiniteTimeLineWidgetState extends State<InfiniteTimeLineWidget> {
     if (focusedDate != null) {
       offset = focusedDate.difference(initialDate).inDays;
     }
+    double adjustedHPadding =
+        _timeLineProps.hPadding > EasyConstants.timelinePadding
+            ? (_timeLineProps.hPadding - EasyConstants.timelinePadding)
+            : 0.0;
+    if (offset == 0) {
+      return 0.0;
+    }
+    return (offset * _dayOffsetConstrains) + adjustedHPadding;
+  }
+
+  /// Calculates the offset for a given date relative to the first date in the timeline.
+  ///
+  /// This method calculates the number of days between the given date and the first date in the timeline.
+  /// It then multiplies this number by `_dayOffsetConstrains` to get the offset in pixels.
+  /// If the horizontal padding (`_timeLineProps.hPadding`) is greater than `EasyConstants.timelinePadding`,
+  /// the difference is added to the offset.
+  ///
+  /// @param date The date for which to calculate the offset.
+  /// @return The calculated offset in pixels.
+  double _calculateDateOffsetWithCurrentDate(DateTime date) {
+    int offset = date.difference(widget.firstDate).inDays;
     double adjustedHPadding =
         _timeLineProps.hPadding > EasyConstants.timelinePadding
             ? (_timeLineProps.hPadding - EasyConstants.timelinePadding)
@@ -257,5 +319,13 @@ class _InfiniteTimeLineWidgetState extends State<InfiniteTimeLineWidget> {
   void _onDayChanged(bool isSelected, DateTime currentDate) {
     // A date is selected
     widget.onDateChange?.call(currentDate);
+    // Mantain the selected day in the center of the timeline
+    if (widget.animateOnDayChanged) {
+      if (widget.autoCenter) {
+        _animateToCenter(currentDate);
+      } else {
+        _animateToStart(currentDate);
+      }
+    }
   }
 }

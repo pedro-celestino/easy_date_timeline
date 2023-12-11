@@ -15,8 +15,7 @@ class EasyInfiniteDateTimelineController {
       _infiniteTimeLineState != null,
       'EasyInfiniteDateTimelineController is not attached to any EasyInfiniteDateTimeline View.',
     );
-
-    final offset = _calculateDateOffset(_infiniteTimeLineState!._focusDate);
+    final offset = _calculateOffset(_infiniteTimeLineState!._focusDate);
     _infiniteTimeLineState!._controller.jumpTo(offset);
   }
 
@@ -29,8 +28,7 @@ class EasyInfiniteDateTimelineController {
       _infiniteTimeLineState != null,
       'EasyInfiniteDateTimelineController is not attached to any EasyInfiniteDateTimeline View.',
     );
-
-    final offset = _calculateDateOffset(_infiniteTimeLineState!._focusDate);
+    final offset = _calculateOffset(_infiniteTimeLineState!._focusDate);
     _infiniteTimeLineState!._controller.animateTo(
       offset,
       duration: duration,
@@ -48,7 +46,7 @@ class EasyInfiniteDateTimelineController {
       _infiniteTimeLineState != null,
       'EasyInfiniteDateTimelineController is not attached to any EasyInfiniteDateTimeline View.',
     );
-    final offset = _calculateDateOffset(date);
+    double offset = _calculateOffset(date);
     _infiniteTimeLineState!._controller.animateTo(
       offset,
       duration: duration,
@@ -65,7 +63,7 @@ class EasyInfiniteDateTimelineController {
       _infiniteTimeLineState != null,
       'EasyInfiniteDateTimelineController is not attached to any EasyInfiniteDateTimeline View.',
     );
-    final offset = _calculateDateOffset(DateTime.now());
+    final offset = _calculateOffset(DateTime.now());
     _infiniteTimeLineState!._controller.animateTo(
       offset,
       duration: duration,
@@ -85,6 +83,21 @@ class EasyInfiniteDateTimelineController {
     _infiniteTimeLineState!._controller.jumpTo(
       offset,
     );
+  }
+
+  /// Calculates the scroll offset for a given date.
+  ///
+  /// This method calculates the offset for the given date and adjusts it based on whether the timeline should auto-center.
+  /// If `autoCenter` is true, the offset is adjusted by subtracting `_dayOffsetCenterConstrains` to center the date in the timeline.
+  /// If `autoCenter` is false, the offset is not adjusted.
+  ///
+  /// @param date The date for which to calculate the offset.
+  /// @return The calculated offset.
+  double _calculateOffset(DateTime date) {
+    final autoCenter = _infiniteTimeLineState!.widget.autoCenter;
+    final offset = _calculateDateOffset(date) -
+        (autoCenter ? _infiniteTimeLineState!._dayOffsetCenterConstrains : 0.0);
+    return offset;
   }
 
   /// the method calculates the number of days between startDate and lastDate using the difference() method

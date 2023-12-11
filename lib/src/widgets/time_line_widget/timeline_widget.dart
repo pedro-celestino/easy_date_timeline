@@ -19,6 +19,8 @@ class TimeLineWidget extends StatefulWidget {
     this.timeLineProps = const EasyTimeLineProps(),
     this.onDateChange,
     this.itemBuilder,
+    this.autoCenter = false,
+    this.animateOnDayChanged = false,
   })  : assert(timeLineProps.hPadding > -1,
             "Can't set timeline hPadding less than zero."),
         assert(timeLineProps.separatorPadding > -1,
@@ -38,6 +40,15 @@ class TimeLineWidget extends StatefulWidget {
 
   /// The background color of the selected day.
   final Color activeDayColor;
+
+  /// Automatically centers the day in the timeline.
+  /// If set to `true`, the timeline will automatically scroll to center the day.
+  /// If set to `false`, the timeline will not scroll when the day changes.
+  final bool autoCenter;
+
+  /// If set to `true`, the timeline will animate when the day changes.
+  /// If set to `false`, the timeline will not animate when the day changes.
+  final bool animateOnDayChanged;
 
   /// Represents a list of inactive dates for the timeline widget.
   /// Note that all the dates defined in the inactiveDates list will be deactivated.
@@ -75,13 +86,42 @@ class _TimeLineWidgetState extends State<TimeLineWidget> {
   double get _dayWidth => _dayProps.width;
   double get _dayHeight => _dayProps.height;
   double get _dayOffsetConstrains => _isLandscapeMode ? _dayHeight : _dayWidth;
+  double get _dayOffsetCenterConstrains =>
+      (MediaQuery.of(context).size.width - _dayOffsetConstrains) / 2.09;
 
   late ScrollController _controller;
   @override
   void initState() {
     super.initState();
-    _controller = ScrollController(
-      initialScrollOffset: _calculateDateOffset(widget.initialDate),
+    final initialDateOffset = _calculateDateOffset(widget.initialDate);
+    _controller = ScrollController(initialScrollOffset: initialDateOffset);
+    if (widget.autoCenter) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _jumpToCenter(initialDateOffset);
+      });
+    }
+  }
+
+  void _jumpToCenter(double initialDateOffset) {
+    _controller.jumpTo(
+      initialDateOffset - _dayOffsetCenterConstrains,
+    );
+  }
+
+  void _animateToCenter(DateTime currentDate) {
+    _controller.animateTo(
+      _calculateDateOffset(currentDate) -
+          (MediaQuery.of(context).size.width - _dayOffsetConstrains) / 2.09,
+      duration: const Duration(milliseconds: 500),
+      curve: Curves.decelerate,
+    );
+  }
+
+  void _animateToStart(DateTime currentDate) {
+    _controller.animateTo(
+      _calculateDateOffset(currentDate),
+      duration: const Duration(milliseconds: 500),
+      curve: Curves.decelerate,
     );
   }
 
@@ -202,5 +242,13 @@ class _TimeLineWidgetState extends State<TimeLineWidget> {
   void _onDayChanged(bool isSelected, DateTime currentDate) {
     // A date is selected
     widget.onDateChange?.call(currentDate);
+    // Mantain the selected day in the center of the timeline
+    if (widget.animateOnDayChanged) {
+      if (widget.autoCenter) {
+        _animateToCenter(currentDate);
+      } else {
+        _animateToStart(currentDate);
+      }
+    }
   }
 }
